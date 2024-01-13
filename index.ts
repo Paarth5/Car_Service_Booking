@@ -110,6 +110,22 @@ app.post("/login", async (req, res) => {
   }
 });
 
+app.get("/carServices/:type", (req, res) => {
+  try {
+    const type = req.params.type;
+    const query = "Select * from car_services where type_of_service = (?)";
+    db.query(query, [type], (err, result) => {
+      if (err) {
+        throw err;
+      }
+      const data = (result as RowDataPacket[])[0];
+      res.status(200).json({ ...data });
+    });
+  } catch (err) {
+    res.status(500).json({ err });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Listening on Port ${PORT}`);
 });
