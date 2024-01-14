@@ -126,6 +126,46 @@ app.get("/carServices/:type", (req, res) => {
   }
 });
 
+app.get("/carShopping/:type", (req, res) => {
+  try {
+    const type1 = req.params.type;
+    const query =
+      "SELECT id, name, price, img_path FROM car_Shopping WHERE type = (?)";
+    db.query(query, [type1], (err, result) => {
+      if (err) {
+        throw err;
+      }
+      const data = result as RowDataPacket[];
+      res.status(200).json({ ...data });
+    });
+  } catch (err) {
+    res.status(500).json({ err });
+  }
+});
+
+app.get("/carPart/:id", (req, res) => {
+  try {
+    const id = req.params.id;
+    const query = "SELECT * FROM car_Shopping WHERE id = ?";
+    console.log("hello", id);
+
+    db.query(query, [id], (err, result) => {
+      if (err) {
+        throw err;
+      }
+      const data = result as RowDataPacket[];
+      if (data.length > 0) {
+        const data1 = data[0];
+        res.status(200).json({ ...data1 });
+      } else {
+        res.status(404).json({ msg: "No data found for the given ID" });
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ err });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Listening on Port ${PORT}`);
 });
