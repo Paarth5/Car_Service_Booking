@@ -46,8 +46,11 @@ app.post("/register", async (req, res) => {
         if (err) {
           throw err;
         }
+        const userId = (result as any).insertId;
+
         const token = jwt.sign(
           {
+            id: userId,
             email,
             phone_number,
           },
@@ -84,10 +87,11 @@ app.post("/login", async (req, res) => {
     if (result.length > 0) {
       const firstUser = result[0];
       const isMatch = await bcrypt.compare(password, firstUser.password);
-
+      console.log(firstUser);
       if (isMatch) {
         const token = jwt.sign(
           {
+            id: firstUser.id,
             email: firstUser.email,
             phone_number: firstUser.phone_number,
           },
@@ -147,7 +151,62 @@ app.get("/carPart/:id", (req, res) => {
   try {
     const id = req.params.id;
     const query = "SELECT * FROM car_Shopping WHERE id = ?";
-    console.log("hello", id);
+
+    db.query(query, [id], (err, result) => {
+      if (err) {
+        throw err;
+      }
+      const data = result as RowDataPacket[];
+      if (data.length > 0) {
+        const data1 = data[0];
+        res.status(200).json({ ...data1 });
+      } else {
+        res.status(404).json({ msg: "No data found for the given ID" });
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ err });
+  }
+});
+
+// Bike API's
+app.get("/bikeServices/:type", (req, res) => {
+  try {
+    const type = req.params.type;
+    const query = "Select * from bike_services where type_of_service = (?)";
+    db.query(query, [type], (err, result) => {
+      if (err) {
+        throw err;
+      }
+      const data = (result as RowDataPacket[])[0];
+      res.status(200).json({ ...data });
+    });
+  } catch (err) {
+    res.status(500).json({ err });
+  }
+});
+
+app.get("/bikeShopping/:type", (req, res) => {
+  try {
+    const type1 = req.params.type;
+    const query =
+      "SELECT id, name, price, img_path FROM bike_Shopping WHERE type = (?)";
+    db.query(query, [type1], (err, result) => {
+      if (err) {
+        throw err;
+      }
+      const data = result as RowDataPacket[];
+      res.status(200).json({ ...data });
+    });
+  } catch (err) {
+    res.status(500).json({ err });
+  }
+});
+
+app.get("/bikePart/:id", (req, res) => {
+  try {
+    const id = req.params.id;
+    const query = "SELECT * FROM bike_Shopping WHERE id = ?";
 
     db.query(query, [id], (err, result) => {
       if (err) {

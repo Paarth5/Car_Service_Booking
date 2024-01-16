@@ -37,7 +37,7 @@ const createDatabase = async (databaseName: string) => {
           id INT AUTO_INCREMENT PRIMARY KEY,
           email VARCHAR(255) UNIQUE NOT NULL,
           password VARCHAR(255) NOT NULL,
-          phone_number INT(45) unique,
+          phone_number BIGINT unique,
           booking_history JSON
       )`
   );
@@ -66,6 +66,47 @@ const createDatabase = async (databaseName: string) => {
           specifications JSON,
           part_number VARCHAR(255),
           numberOfItems INT
+    )`
+  );
+  await createTable(
+    "carService",
+    `CREATE TABLE IF NOT EXISTS bike_Services (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          type_of_service VARCHAR(255) NOT NULL,
+          name VARCHAR(255) NOT NULL,
+          price INT NOT NULL,
+          img_path VARCHAR(255),
+          details JSON,
+          description JSON
+      )`
+  );
+  await createTable(
+    "carService",
+    `CREATE TABLE IF NOT EXISTS bike_Shopping (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          type varchar(255) NOT NULL,
+          type_of_shopping VARCHAR(255) NOT NULL,
+          name VARCHAR(255) NOT NULL,
+          price INT NOT NULL,
+          img_path VARCHAR(255),
+          product_details TEXT,
+          specifications JSON,
+          part_number VARCHAR(255),
+          numberOfItems INT
+    )`
+  );
+  await createTable(
+    "carService",
+    `CREATE TABLE IF NOT EXISTS bookings (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          vehicle VARCHAR(255) NOT NULL,
+          type varchar(255) NOT NULL,
+          user_id INT NOT NULL,
+          name varchar(255) NOT NULL,
+          phone_no BIGINT NOT NULL,
+          location TEXT NOT NULL,
+          date DATE,
+          FOREIGN KEY (user_id) REFERENCES users(id)
     )`
   );
 })();
@@ -114,8 +155,8 @@ const createDatabase = async (databaseName: string) => {
 // );
 // INSERT INTO car_Services (type_of_service, name, price, img_path, details, description)
 // VALUES (
-// 'milage',
-//     'Milage Service',
+// 'mileage',
+//     'Mileage Service',
 //     3000,
 //     'https://picsum.photos/200',
 //     '["All payments are available", "100% satisfaction", "Pick-up  & Drop at your location", "first time free service available"]',
@@ -385,4 +426,134 @@ const createDatabase = async (databaseName: string) => {
 // PLUG AND PLAY DESIGN – Can be installed easily within 15 mins. Lower profile of the bulb is only 0.72 inches apply to 95% vehicles. All-in-one Plug & Play Design, No Modification Required, Fits easily into the assembly.
 // Design with High Power CSP LED Chips – 500% brighter than stock H8 LED Fog Light Bulbs. high focus and max light output with a wider and farther lighting area, keep safer night driving.
 // 500% brighter than Traditional Halogen"
+// );
+
+// -- Bike Shopping
+// select * from bike_Shopping;
+// drop table bike_Shopping;
+// INSERT INTO bike_Shopping (type, type_of_shopping, name, price, img_path, product_details, specifications, numberOfItems)
+// VALUES (
+//     'abs',
+//     'ABS',
+//     'Swift break pads',
+//     2000,
+//     'https://picsum.photos/200',
+//     'Being a prominent firm, we are engaged in offering a distinguished assortment of Brake Cables.We have a complete range of Car Brake Cables.',
+//     '{"VehicleType": "Bike", "Color": "Black", "PackagingType": "Box", "OuterMaterial": "Rubber", "InnerMaterial": "Aluminium", "VehicleBrand": "Hyundai"}',
+//     1
+// );
+// INSERT INTO bike_Shopping (type, type_of_shopping, name, price, img_path, product_details, numberOfItems,specifications)
+// VALUES (
+// 	"body",
+//     "BODY ACCESSORIES",
+//     "Front & Mudguard",
+//     3000,
+//     "https://picsum.photos/200",
+//     "FRONT FAIRING AND MUDGUARD KARIZMA R ZADON
+
+// This COMBO BODY PARTS is suitable for : HERO HONDA KARIZMA,HERO HONDA KARIZMA R,HERO HONDA KARIZMA R NM",
+// 1,
+//     '{
+//   "BoxPackWeight": {
+//     "approx": "1000.00 Grams"
+//   },
+//   "BoxPackVolume": {
+//     "approx": "4000 CC",
+//     "volumetricWeightApplied": "0.80 Kg"
+//   },
+//   "ShippingCharge": {
+//     "amount": "Rs.400.00",
+//     "minFor": "Minimum for"
+//   }
+// }
+// '
+// );
+// INSERT INTO bike_Shopping (type, type_of_shopping, name, price, img_path, product_details, numberOfItems, specifications)
+// VALUES (
+// 	"battery",
+//     "BATTERY",
+//     "Amaron",
+//     3000,
+//     "https://picsum.photos/200",
+//     "AMARON HI LIFE FLO 36B20L 36 ah BATTERY FOR PETROL bike
+
+// Maintenance free<br>
+// Factory charged and ready to fit<br>
+// High cranking power<br>
+// 55 months warranty<br>
+// Compatible With Vehicle Type: Passenger bike",
+// 1,'{
+//   "Brand": "Amaron",
+//   "VehicleServiceType": "Bike",
+//   "Voltage": "12 Volts"
+// }
+// '
+// );
+// INSERT INTO bike_Shopping (type, type_of_shopping, name, price, img_path, product_details)
+// VALUES (
+// 	"oil",
+//     "OIL",
+//     "Total Engineer",
+//     3000,
+//     "https://picsum.photos/200",
+//     "
+
+// TOTALENERGIES - 5W40 Engine Oil - Quartz 9000 Energy - ACEA A3/B4, API SN/CF - Age-Resistance Technology - Ultimate Protection - Advanced Synthetic Motor Oil Lubricant - 3.5L
+
+// ULTIMATE POWER & PERFORMANCE: Formulated with carefully selected premium fully synthetic engile oil, the Quartz 9000 5W40 engine oil ensures excellent start ups even in extremely cold weather conditions.
+// BEST IN CLASS CLEANLINESS: The state of the art molecular structure of this Total Quartz 9000 provides outstanding engine longevity by ensuring utmost engine cleanliness, thanks to its advance detergent and excellent"
+// );
+
+// INSERT INTO bike_Shopping (type, type_of_shopping, name, price, img_path, product_details, numberOfItems)
+// VALUES (
+// 	"tire",
+//     "TIRE",
+//     "Alpha H1",
+//     6500,
+//     "https://picsum.photos/200",
+//     "
+// ALPHA H1
+
+// Zero Degree steel belt
+// Arrests dynamic growth
+//  Excellent high-speed stability via minimal       structural deformation.
+
+// Premium compound with a smart blend os Silica and Carbn Black
+// Extreme chemical grip on wet and dry surfaces.
+// Optimum tread mileage
+
+// dual Radii cavity profile.
+// Quick to achieve lean angles.
+// Outstanding sport handling",
+// 1
+// );
+
+// INSERT INTO bike_Shopping (type, type_of_shopping, name, price, img_path, product_details)
+// VALUES (
+// 	"light",
+//     "LIGHT",
+//     "Pivalon",
+//     8250,
+//     "https://picsum.photos/200",
+//     "Pivalo 12V-85V Energy-saving LED Motorcycle Headlight Headlamp Motorbike Motorcycle Head light Lamp with 12 White Light LED (Silver) Bike Headlight Mount
+
+// Pivalo LED Head Light/Lamp is the best upgrade you can have for your two wheeler or four wheeler. A universal fitment for Bikes And Cars with a cooling mechanism, the offered white light LED is appreciated for its extended brightness or heat-dissipating design. This is a highly used product by bike enthusiasts, driver lovers and biker boys who love to ride or drive around the areas. It offers a unique visibility experience by illuminating the pathway ahead. Specification: LED Power: 24W (12 x 2 W High Intensity LED) Beam Pattern: Flood Beam Input Voltage: 12V-85V DC (fits 12V, 24V"
+// );
+// INSERT INTO bike_Shopping (type, type_of_shopping, name, price, img_path, product_details, numberOfItems,specifications)
+// VALUES (
+// 	"gear",
+//     "GEAR & CLUTCH",
+//     "Clutch set",
+//     8250,
+//     "https://picsum.photos/200",
+//     "Clutch Set (Clutch + Pressure Plate) Hyundai Santro/ i10 O/M/ I10 Magna (Valeo)",
+// 1,
+//     '{
+//   "Manufacturer": "Valeo",
+//   "Brand": "Valeo",
+//   "PackageDimensions": "26.01 x 24 x 5.99 cm; 3.04kg",
+//   "ItemModelNumber": "404514",
+//   "Weight": "3 kg 40g"
+// }
+// '
 // );
