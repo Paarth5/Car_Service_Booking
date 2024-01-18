@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 import helmet from "helmet";
 import morgan from "morgan";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { RowDataPacket } from "mysql2";
 dotenv.config();
 const app = express();
@@ -114,7 +114,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/carServices/:type", (req, res) => {
+app.get("/car/services/:type", (req, res) => {
   try {
     const type = req.params.type;
     const query = "Select * from car_services where type_of_service = (?)";
@@ -130,7 +130,7 @@ app.get("/carServices/:type", (req, res) => {
   }
 });
 
-app.get("/carShopping/:type", (req, res) => {
+app.get("/car/shopping/:type", (req, res) => {
   try {
     const type1 = req.params.type;
     const query =
@@ -147,7 +147,7 @@ app.get("/carShopping/:type", (req, res) => {
   }
 });
 
-app.get("/carPart/:id", (req, res) => {
+app.get("/car/part/:id", (req, res) => {
   try {
     const id = req.params.id;
     const query = "SELECT * FROM car_Shopping WHERE id = ?";
@@ -170,7 +170,7 @@ app.get("/carPart/:id", (req, res) => {
 });
 
 // Bike API's
-app.get("/bikeServices/:type", (req, res) => {
+app.get("/bike/services/:type", (req, res) => {
   try {
     const type = req.params.type;
     const query = "Select * from bike_services where type_of_service = (?)";
@@ -186,7 +186,7 @@ app.get("/bikeServices/:type", (req, res) => {
   }
 });
 
-app.get("/bikeShopping/:type", (req, res) => {
+app.get("/bike/shopping/:type", (req, res) => {
   try {
     const type1 = req.params.type;
     const query =
@@ -203,7 +203,7 @@ app.get("/bikeShopping/:type", (req, res) => {
   }
 });
 
-app.get("/bikePart/:id", (req, res) => {
+app.get("/bike/part/:id", (req, res) => {
   try {
     const id = req.params.id;
     const query = "SELECT * FROM bike_Shopping WHERE id = ?";
@@ -224,6 +224,83 @@ app.get("/bikePart/:id", (req, res) => {
     res.status(500).json({ err });
   }
 });
+
+app.post("/booking/:vehicle/:type", async (req, res) => {
+  try {
+    const type = req.params.type;
+    const vehicle = req.params.vehicle;
+    const { name, phone_no, location, date } = req.body;
+    const token = req.headers["authorization"];
+    if (!token) {
+      return res.status(401).json({ msg: "Unauthorized User" });
+    }
+
+    jwt.verify(
+      token,
+      process.env.JWT_SECRET as string,
+      async function (err, user) {
+        if (err) throw err;
+        if (user && typeof user !== "string" && "id" in user) {
+          const newUser = user as JwtPayload;
+          await addBookingHistory(newUser.id, date, type, vehicle);
+          const query =
+            "INSERT INTO bookings (vehicle, type, user_id, name, phone_no, location, date) VALUES (?, ?, ?, ?, ?, ?, ?)";
+          db.query(
+            query,
+            [vehicle, type, newUser.id, name, phone_no, location, date],
+            (err, result) => {
+              if (err) {
+                throw err;
+              }
+
+              // Adding to user bookings
+
+              res.status(200).json({ msg: "Booking added" });
+            }
+          );
+        } else {
+          return res.status(403).json({ msg: "Invalid User" });
+        }
+      }
+    );
+  } catch (err) {
+    res.status(500).json({ err });
+  }
+});
+
+async function addBookingHistory(
+  user_id: number,
+  date: string,
+  type: string,
+  vehicle: string
+) {
+  console.log(user_id, date, type);
+
+  const query = "SELECT booking_history FROM users WHERE id = ?";
+  db.query(query, [user_id], async (err, result) => {
+    if (err) {
+      throw err;
+    }
+
+    const rows = result as RowDataPacket[];
+    if (rows.length > 0) {
+      const data = rows[0];
+
+      const history: any[] = data.booking_history;
+
+      history.push({ date, type, vehicle });
+
+      const updatedBookingHistory = JSON.stringify(history);
+
+      await db.execute("UPDATE users SET booking_history = ? WHERE id = ?", [
+        updatedBookingHistory,
+        user_id,
+      ]);
+    } else {
+      return;
+    }
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`Listening on Port ${PORT}`);

@@ -105,7 +105,7 @@ const createDatabase = async (databaseName: string) => {
           name varchar(255) NOT NULL,
           phone_no BIGINT NOT NULL,
           location TEXT NOT NULL,
-          date DATE,
+          date VARCHAR(255) NOT NULL,
           FOREIGN KEY (user_id) REFERENCES users(id)
     )`
   );
