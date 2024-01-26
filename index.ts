@@ -22,8 +22,8 @@ const PORT = process.env.PORT || 3001;
 const db = sql.createConnection({
   host: "localhost",
   user: "root",
-  password: process.env.DB_PASSWORD,
-  database: "carService",
+  password: "",
+  database: "carservice",
   waitForConnections: true,
 });
 
@@ -252,9 +252,6 @@ app.post("/booking/:vehicle/:type", async (req, res) => {
               if (err) {
                 throw err;
               }
-
-              // Adding to user bookings
-
               res.status(200).json({ msg: "Booking added" });
             }
           );
@@ -286,7 +283,12 @@ async function addBookingHistory(
     if (rows.length > 0) {
       const data = rows[0];
 
-      const history: any[] = data.booking_history;
+      let history: any[] = [];
+
+      if (data.booking_history) {
+        history = JSON.parse(data.booking_history);
+      }
+      console.log(history);
 
       history.push({ date, type, vehicle });
 

@@ -428,6 +428,84 @@ const createDatabase = async (databaseName: string) => {
 // 500% brighter than Traditional Halogen"
 // );
 
+// INSERT INTO bike_Services (type_of_service, name, price, img_path, details, description)
+// VALUES (
+// 	'regular',
+//     'Regular Service',
+//     4000,
+//     'https://picsum.photos/200',
+//     '["All payments are available", "100% satisfaction", "Pick-up  & Drop at your location", "first time free service available"]',
+//     '["Engine oil  and oil filter changing", "Engine maintenance check", "Break check and air check", "Complete car cleaning"]'
+// );
+// INSERT INTO bike_Services (type_of_service, name, price, img_path, details, description)
+// VALUES (
+// 	'express',
+//     'Express Service',
+//     6000,
+//     'https://picsum.photos/200',
+//     '["All payments are available", "100% satisfaction", "Pick-up  & Drop at your location", "first time free service available"]',
+//     '["Engine oil  and oil filter changing", "Engine maintenance check", "Break check and air check", "Complete car cleaning", "Fast Service"]'
+// );
+// INSERT INTO bike_Services (type_of_service, name, price, img_path, details, description)
+// VALUES (
+// 'mileage',
+//     'Mileage Service',
+//     3000,
+//     'https://picsum.photos/200',
+//     '["All payments are available", "100% satisfaction", "Pick-up  & Drop at your location", "first time free service available"]',
+//     '["ECG inspection", "Clutch Assessment", "Injector Inspection", "Cleaning catalytic converter"]'
+// );
+
+// INSERT INTO bike_Services (type_of_service, name, price, img_path, details, description)
+// VALUES (
+// 'rust',
+//     'RUST COATING',
+//     3000,
+//     'https://picsum.photos/200',
+//     '["All payments are available", "100% satisfaction", "Pick-up  & Drop at your location", "first time free service available"]',
+//     '["Cost changes based on the dent",
+// "Get back your classic look",
+// "Best service",
+// "With warrenty",
+// "High quality paints are used"]'
+// );
+// INSERT INTO bike_Services (type_of_service, name, price, img_path, details, description)
+// VALUES (
+// 'exterior',
+//     'EXTERIOR CLEANING',
+//     4000,
+//     'https://picsum.photos/200',
+//     '["All payments are available", "100% satisfaction", "Pick-up  & Drop at your location", "first time free service available"]',
+//     '["Best cleaning with virus protection ",
+// "Get back your classic look",
+// "AC vent cleaning",
+// "Stain ramoval"]'
+// );
+// INSERT INTO bike_Services (type_of_service, name, price, img_path, details, description)
+// VALUES (
+// 'painting',
+//     'POLISHIN & PAINTING ',
+//     3000,
+//     'https://picsum.photos/200',
+//     '["All payments are available", "100% satisfaction", "Pick-up  & Drop at your location", "first time free service available"]',
+//     '["Cost changes based on the dent",
+// "Get back your classic look",
+// "Best service",
+// "With warrenty",
+// "High quality paints are used"]'
+// );
+// INSERT INTO bike_Services (type_of_service, name, price, img_path, details, description)
+// VALUES (
+// 'dent',
+//     'DENT SERVICE',
+//     1000,
+//     'https://picsum.photos/200',
+//     '["All payments are available", "100% satisfaction", "Pick-up  & Drop at your location", "first time free service available"]',
+//     '["Cast changes based on the dent ",
+// "Get back your classic look",
+// "Best service",
+// "With warrenty"]'
+// );
 // -- Bike Shopping
 // select * from bike_Shopping;
 // drop table bike_Shopping;
