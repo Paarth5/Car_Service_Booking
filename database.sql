@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 26, 2024 at 02:05 PM
+-- Generation Time: Jan 31, 2024 at 10:58 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -98,6 +98,15 @@ CREATE TABLE `bookings` (
   `location` text NOT NULL,
   `date` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `bookings`
+--
+
+INSERT INTO `bookings` (`id`, `vehicle`, `type`, `user_id`, `name`, `phone_no`, `location`, `date`) VALUES
+(5, 'bike', 'painting', 1, 'Paarth Bansal', 123233, 'asddsfsdfasfsdfsd', '2024-01-18'),
+(6, 'bike', 'painting', 1, 'Paarth Bansal', 123233, 'asddsfsdfasfsdfsd', '2024-01-18'),
+(7, 'car', 'painting', 1, 'Paarth Bansal', 123233, 'asddsfsdfasfsdfsd', '2024-01-18');
 
 -- --------------------------------------------------------
 
@@ -207,15 +216,18 @@ CREATE TABLE `users` (
   `email` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
   `phone_number` bigint(20) DEFAULT NULL,
-  `booking_history` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`booking_history`))
+  `booking_history` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`booking_history`)),
+  `type_of_user` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `email`, `password`, `phone_number`, `booking_history`) VALUES
-(2, 'yashu@gmail.com', '$2b$10$KrjMaBhdTSJh.FHuHeU6s.7/dcCUhKl8AzZWqo6IBZMBlf16K24w2', 13224, '[{\"date\":\"2024-01-18\",\"type\":\"painting\",\"vehicle\":\"bike\"}]');
+INSERT INTO `users` (`id`, `email`, `password`, `phone_number`, `booking_history`, `type_of_user`) VALUES
+(1, 'admin@gmail.com', '$2b$10$Rrl.DHgSXL35n44Z4JU5HOOAVgEjG5yDqW5tebTaEhiRRIXvxKV0S', 1234567890, '[{\"date\":\"2024-01-18\",\"type\":\"painting\",\"vehicle\":\"bike\"},{\"date\":\"2024-01-18\",\"type\":\"painting\",\"vehicle\":\"bike\"},{\"date\":\"2024-01-18\",\"type\":\"painting\",\"vehicle\":\"car\"}]', 'admin'),
+(2, 'yashu@gmail.com', '$2b$10$KrjMaBhdTSJh.FHuHeU6s.7/dcCUhKl8AzZWqo6IBZMBlf16K24w2', 13224, '[{\"date\":\"2024-01-18\",\"type\":\"painting\",\"vehicle\":\"bike\"}]', 'user'),
+(4, 'parth@gmail.com', '$2b$10$cEWLMrojjzxUdnpLCllwEeys2eOc/I1ddhoRpuB4YYZPwZdQYAnMW', 12232390, '[]', 'banned');
 
 --
 -- Indexes for dumped tables
@@ -280,7 +292,7 @@ ALTER TABLE `bike_shopping`
 -- AUTO_INCREMENT for table `bookings`
 --
 ALTER TABLE `bookings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `car_services`
@@ -298,7 +310,7 @@ ALTER TABLE `car_shopping`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- Constraints for dumped tables

@@ -1,4 +1,9 @@
-import express from "express";
+import express, {
+  Request,
+  Response,
+  NextFunction,
+  RequestHandler,
+} from "express";
 import sql from "mysql2";
 import bodyParser from "body-parser";
 import cors from "cors";
@@ -38,10 +43,10 @@ app.post("/register", async (req, res) => {
     const passwordHash = await bcrypt.hash(password, salt);
 
     const query =
-      "INSERT INTO users (email, password, phone_number, booking_history) VALUES (?, ?, ?, ?)";
+      "INSERT INTO users (email, password, phone_number, booking_history, type_of_user) VALUES (?, ?, ?, ?, ?)";
     db.query(
       query,
-      [email, passwordHash, phone_number, "[]"],
+      [email, passwordHash, phone_number, "[]", "user"],
       (err, result) => {
         if (err) {
           throw err;
@@ -53,6 +58,7 @@ app.post("/register", async (req, res) => {
             id: userId,
             email,
             phone_number,
+            type_of_user: "user",
           },
           process.env.JWT_SECRET as string,
           {
@@ -94,6 +100,7 @@ app.post("/login", async (req, res) => {
             id: firstUser.id,
             email: firstUser.email,
             phone_number: firstUser.phone_number,
+            type_of_user: firstUser.type_of_user,
           },
           process.env.JWT_SECRET as string,
           {
@@ -239,7 +246,7 @@ app.post("/booking/:vehicle/:type", async (req, res) => {
       token,
       process.env.JWT_SECRET as string,
       async function (err, user) {
-        if (err) throw err;
+        if (err) return res.status(403).json({ msg: "Invalid User" });
         if (user && typeof user !== "string" && "id" in user) {
           const newUser = user as JwtPayload;
           await addBookingHistory(newUser.id, date, type, vehicle);
@@ -251,8 +258,7 @@ app.post("/booking/:vehicle/:type", async (req, res) => {
             (err, result) => {
               if (err) {
                 throw err;
-              }
-              res.status(200).json({ msg: "Booking added" });
+              } else res.status(200).json({ msg: "Booking added" });
             }
           );
         } else {
@@ -271,8 +277,6 @@ async function addBookingHistory(
   type: string,
   vehicle: string
 ) {
-  console.log(user_id, date, type);
-
   const query = "SELECT booking_history FROM users WHERE id = ?";
   db.query(query, [user_id], async (err, result) => {
     if (err) {
@@ -288,13 +292,12 @@ async function addBookingHistory(
       if (data.booking_history) {
         history = JSON.parse(data.booking_history);
       }
-      console.log(history);
 
       history.push({ date, type, vehicle });
 
       const updatedBookingHistory = JSON.stringify(history);
 
-      await db.execute("UPDATE users SET booking_history = ? WHERE id = ?", [
+      db.execute("UPDATE users SET booking_history = ? WHERE id = ?", [
         updatedBookingHistory,
         user_id,
       ]);
@@ -304,27 +307,128 @@ async function addBookingHistory(
   });
 }
 
+app.get("/bookings", async (req, res) => {
+  try {
+    const token = req.headers["authorization"];
+    if (!token) {
+      return res.status(401).json({ msg: "Unauthorized User" });
+    }
+
+    jwt.verify(
+      token,
+      process.env.JWT_SECRET as string,
+      async function (err, user) {
+        if (err) return res.status(403).json({ msg: "Invalid User" });
+        if (user && typeof user !== "string" && "id" in user) {
+          const newUser = user as JwtPayload;
+
+          const query = "Select booking_history FROM users where id = (?)";
+          db.query(query, [newUser.id], (err, result) => {
+            if (err) {
+              throw err;
+            } else res.status(200).json({ result });
+          });
+        } else {
+          return res.status(403).json({ msg: "Invalid User" });
+        }
+      }
+    );
+  } catch (err) {
+    res.status(500).json({ err });
+  }
+});
+
+//ADMIN FUNCTIONS
+const checkAdmin: RequestHandler = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const token = req.headers["authorization"];
+
+  if (!token) {
+    return res.status(401).json({ msg: "Unauthorized User" });
+  }
+
+  jwt.verify(
+    token as string,
+    process.env.JWT_SECRET as string,
+    async function (err, user) {
+      if (err) throw err;
+
+      if (user && typeof user !== "string" && "id" in user) {
+        const newUser = user as JwtPayload;
+
+        if (newUser.type_of_user === "admin") {
+          next();
+        } else {
+          return res.status(403).json({ msg: "Unauthorized User" });
+        }
+      } else {
+        return res.status(403).json({ msg: "Invalid User" });
+      }
+    }
+  );
+};
+
+app.post("/admin/ban/:userId", checkAdmin, async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    const query = "SELECT type_of_user FROM users WHERE id = ?";
+    db.query(query, [userId], async (err, result) => {
+      if (err) {
+        throw err;
+      }
+
+      const rows = result as RowDataPacket[];
+      if (rows.length > 0) {
+        const data = rows[0];
+        let type = data.type_of_user;
+
+        if (type === "user") {
+          type = "banned";
+        } else if (type === "banned") {
+          type = "user";
+        } else if (type === "admin") {
+          return res.status(403).json({ msg: "Cannot Ban another admin" });
+        } else {
+          type = "user";
+        }
+
+        db.execute("UPDATE users SET type_of_user = ? WHERE id = ?", [
+          type,
+          userId,
+        ]);
+      } else {
+        res.status(404).json({ msg: "No user Found wi th the following Id." });
+      }
+
+      res.status(200).json({ msg: "User status updated successfully" });
+    });
+  } catch (err) {
+    res.status(500).json({ err });
+  }
+});
+
+app.get("/admin/users", checkAdmin, async (req, res) => {
+  try {
+    const query =
+      "SELECT id, email, phone_number, booking_history, type_of_user FROM users";
+    db.query(query, async (err, result) => {
+      if (err) {
+        throw err;
+      }
+
+      const users = result as RowDataPacket[];
+
+      res.status(200).json({ users });
+    });
+  } catch (err) {
+    res.status(500).json({ err });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Listening on Port ${PORT}`);
 });
-
-// const query = "INSERT INTO users (email, password, booking_history) VALUES (?, ?, ?)";
-// const email = "parth12@gmail.com";
-// const password = "parth123";
-// const bookingHistory = "[]";
-
-// db.query(query, [email, password, bookingHistory], (err, result) => {
-//   if (err) {
-//     console.error(err);
-//   }
-//   console.log("Entry Added Successfully!");
-//   console.log(result);
-// });
-// async function match() {
-//   const isMatch = await bcrypt.compare(
-//     "1256217a",
-//     "$2b$10$7zR1bOVtdn9U7g44ZGKTPuENvayAjN.6cBzRSIqC.wyY4OSJJTbU6"
-//   );
-//   console.log(isMatch);
-// }
-// match();
