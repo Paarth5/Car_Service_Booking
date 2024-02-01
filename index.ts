@@ -32,6 +32,41 @@ const db = sql.createConnection({
   waitForConnections: true,
 });
 
+const checkBanned: RequestHandler = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const token = req.headers["authorization"];
+
+  if (!token) {
+    return res.status(401).json({ msg: "Unauthorized User" });
+  }
+
+  jwt.verify(
+    token as string,
+    process.env.JWT_SECRET as string,
+    async function (err, user) {
+      if (err) throw err;
+
+      if (user && typeof user !== "string" && "id" in user) {
+        const newUser = user as JwtPayload;
+
+        if (
+          newUser.type_of_user === "admin" ||
+          newUser.type_of_user === "user"
+        ) {
+          next();
+        } else {
+          return res.status(403).json({ msg: "Unauthorized User" });
+        }
+      } else {
+        return res.status(403).json({ msg: "Invalid User" });
+      }
+    }
+  );
+};
+
 app.get("/", (req, res) => {
   res.send("hello");
 });
@@ -121,7 +156,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/car/services/:type", (req, res) => {
+app.get("/car/services/:type", checkBanned, (req, res) => {
   try {
     const type = req.params.type;
     const query = "Select * from car_services where type_of_service = (?)";
@@ -137,7 +172,7 @@ app.get("/car/services/:type", (req, res) => {
   }
 });
 
-app.get("/car/shopping/:type", (req, res) => {
+app.get("/car/shopping/:type", checkBanned, (req, res) => {
   try {
     const type1 = req.params.type;
     const query =
@@ -154,7 +189,7 @@ app.get("/car/shopping/:type", (req, res) => {
   }
 });
 
-app.get("/car/part/:id", (req, res) => {
+app.get("/car/part/:id", checkBanned, (req, res) => {
   try {
     const id = req.params.id;
     const query = "SELECT * FROM car_Shopping WHERE id = ?";
@@ -177,7 +212,7 @@ app.get("/car/part/:id", (req, res) => {
 });
 
 // Bike API's
-app.get("/bike/services/:type", (req, res) => {
+app.get("/bike/services/:type", checkBanned, (req, res) => {
   try {
     const type = req.params.type;
     const query = "Select * from bike_services where type_of_service = (?)";
@@ -193,7 +228,7 @@ app.get("/bike/services/:type", (req, res) => {
   }
 });
 
-app.get("/bike/shopping/:type", (req, res) => {
+app.get("/bike/shopping/:type", checkBanned, (req, res) => {
   try {
     const type1 = req.params.type;
     const query =
@@ -210,7 +245,7 @@ app.get("/bike/shopping/:type", (req, res) => {
   }
 });
 
-app.get("/bike/part/:id", (req, res) => {
+app.get("/bike/part/:id", checkBanned, (req, res) => {
   try {
     const id = req.params.id;
     const query = "SELECT * FROM bike_Shopping WHERE id = ?";
@@ -232,7 +267,7 @@ app.get("/bike/part/:id", (req, res) => {
   }
 });
 
-app.post("/booking/:vehicle/:type", async (req, res) => {
+app.post("/booking/:vehicle/:type", checkBanned, async (req, res) => {
   try {
     const type = req.params.type;
     const vehicle = req.params.vehicle;
@@ -307,7 +342,7 @@ async function addBookingHistory(
   });
 }
 
-app.get("/bookings", async (req, res) => {
+app.get("/bookings", checkBanned, async (req, res) => {
   try {
     const token = req.headers["authorization"];
     if (!token) {
