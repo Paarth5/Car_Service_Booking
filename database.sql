@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 31, 2024 at 10:58 AM
+-- Generation Time: Feb 07, 2024 at 10:32 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -96,17 +96,15 @@ CREATE TABLE `bookings` (
   `name` varchar(255) NOT NULL,
   `phone_no` bigint(20) NOT NULL,
   `location` text NOT NULL,
-  `date` varchar(255) NOT NULL
+  `date` varchar(255) NOT NULL,
+  `status` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `bookings`
 --
 
-INSERT INTO `bookings` (`id`, `vehicle`, `type`, `user_id`, `name`, `phone_no`, `location`, `date`) VALUES
-(5, 'bike', 'painting', 1, 'Paarth Bansal', 123233, 'asddsfsdfasfsdfsd', '2024-01-18'),
-(6, 'bike', 'painting', 1, 'Paarth Bansal', 123233, 'asddsfsdfasfsdfsd', '2024-01-18'),
-(7, 'car', 'painting', 1, 'Paarth Bansal', 123233, 'asddsfsdfasfsdfsd', '2024-01-18');
+
 
 -- --------------------------------------------------------
 
@@ -225,9 +223,10 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `email`, `password`, `phone_number`, `booking_history`, `type_of_user`) VALUES
-(1, 'admin@gmail.com', '$2b$10$Rrl.DHgSXL35n44Z4JU5HOOAVgEjG5yDqW5tebTaEhiRRIXvxKV0S', 1234567890, '[{\"date\":\"2024-01-18\",\"type\":\"painting\",\"vehicle\":\"bike\"},{\"date\":\"2024-01-18\",\"type\":\"painting\",\"vehicle\":\"bike\"},{\"date\":\"2024-01-18\",\"type\":\"painting\",\"vehicle\":\"car\"}]', 'admin'),
-(2, 'yashu@gmail.com', '$2b$10$KrjMaBhdTSJh.FHuHeU6s.7/dcCUhKl8AzZWqo6IBZMBlf16K24w2', 13224, '[{\"date\":\"2024-01-18\",\"type\":\"painting\",\"vehicle\":\"bike\"}]', 'user'),
-(4, 'parth@gmail.com', '$2b$10$cEWLMrojjzxUdnpLCllwEeys2eOc/I1ddhoRpuB4YYZPwZdQYAnMW', 12232390, '[]', 'banned');
+(1, 'admin@gmail.com', '$2b$10$Rrl.DHgSXL35n44Z4JU5HOOAVgEjG5yDqW5tebTaEhiRRIXvxKV0S', 1234567890, '[]', 'admin'),
+(2, 'executive@gmail.com', '$2b$10$qmVbV4GOPQVCnWRhumUx5u7Bt1COfNOkEy5FRLVhrAFA1pBaxpN6.', 987654321, '[{\"booking_id\":3,\"date\":\"2024-01-18\",\"type\":\"painting\",\"vehicle\":\"bike\",\"status\":\"resolved\"}]', 'executive'),
+(3, 'yashu@gmail.com', '$2b$10$KrjMaBhdTSJh.FHuHeU6s.7/dcCUhKl8AzZWqo6IBZMBlf16K24w2', 13224, '[]', 'banned'),
+(4, 'parth@gmail.com', '$2b$10$cEWLMrojjzxUdnpLCllwEeys2eOc/I1ddhoRpuB4YYZPwZdQYAnMW', 12232390, '[]', 'user');
 
 --
 -- Indexes for dumped tables
@@ -249,8 +248,7 @@ ALTER TABLE `bike_shopping`
 -- Indexes for table `bookings`
 --
 ALTER TABLE `bookings`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `user_id` (`user_id`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `car_services`
@@ -292,7 +290,7 @@ ALTER TABLE `bike_shopping`
 -- AUTO_INCREMENT for table `bookings`
 --
 ALTER TABLE `bookings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `car_services`
@@ -310,17 +308,7 @@ ALTER TABLE `car_shopping`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- Constraints for dumped tables
---
-
---
--- Constraints for table `bookings`
---
-ALTER TABLE `bookings`
-  ADD CONSTRAINT `bookings_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

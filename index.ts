@@ -1,9 +1,4 @@
-import express, {
-  Request,
-  Response,
-  NextFunction,
-  RequestHandler,
-} from "express";
+import express from "express";
 import sql from "mysql2";
 import bodyParser from "body-parser";
 import cors from "cors";
@@ -13,6 +8,8 @@ import morgan from "morgan";
 import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { RowDataPacket } from "mysql2";
+import { checkAdmin, checkBanned, checkExecutive } from "./middleware";
+import { addBookingHistory, updateUserBooking } from "./functions";
 dotenv.config();
 const app = express();
 app.use(express.json());
@@ -31,41 +28,6 @@ const db = sql.createConnection({
   database: "carservice",
   waitForConnections: true,
 });
-
-const checkBanned: RequestHandler = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const token = req.headers["authorization"];
-
-  if (!token) {
-    return res.status(401).json({ msg: "Unauthorized User" });
-  }
-
-  jwt.verify(
-    token as string,
-    process.env.JWT_SECRET as string,
-    async function (err, user) {
-      if (err) throw err;
-
-      if (user && typeof user !== "string" && "id" in user) {
-        const newUser = user as JwtPayload;
-
-        if (
-          newUser.type_of_user === "admin" ||
-          newUser.type_of_user === "user"
-        ) {
-          next();
-        } else {
-          return res.status(403).json({ msg: "Unauthorized User" });
-        }
-      } else {
-        return res.status(403).json({ msg: "Invalid User" });
-      }
-    }
-  );
-};
 
 app.get("/", (req, res) => {
   res.send("hello");
@@ -284,16 +246,36 @@ app.post("/booking/:vehicle/:type", checkBanned, async (req, res) => {
         if (err) return res.status(403).json({ msg: "Invalid User" });
         if (user && typeof user !== "string" && "id" in user) {
           const newUser = user as JwtPayload;
-          await addBookingHistory(newUser.id, date, type, vehicle);
+
           const query =
-            "INSERT INTO bookings (vehicle, type, user_id, name, phone_no, location, date) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            "INSERT INTO bookings (vehicle, type, user_id, name, phone_no, location, date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
           db.query(
             query,
-            [vehicle, type, newUser.id, name, phone_no, location, date],
-            (err, result) => {
+            [
+              vehicle,
+              type,
+              newUser.id,
+              name,
+              phone_no,
+              location,
+              date,
+              "pending",
+            ],
+            async (err, result) => {
               if (err) {
                 throw err;
-              } else res.status(200).json({ msg: "Booking added" });
+              } else {
+                const booking_id = (result as any).insertId;
+
+                await addBookingHistory(
+                  newUser.id,
+                  date,
+                  type,
+                  vehicle,
+                  booking_id
+                );
+                res.status(200).json({ msg: "Booking added" });
+              }
             }
           );
         } else {
@@ -305,42 +287,6 @@ app.post("/booking/:vehicle/:type", checkBanned, async (req, res) => {
     res.status(500).json({ err });
   }
 });
-
-async function addBookingHistory(
-  user_id: number,
-  date: string,
-  type: string,
-  vehicle: string
-) {
-  const query = "SELECT booking_history FROM users WHERE id = ?";
-  db.query(query, [user_id], async (err, result) => {
-    if (err) {
-      throw err;
-    }
-
-    const rows = result as RowDataPacket[];
-    if (rows.length > 0) {
-      const data = rows[0];
-
-      let history: any[] = [];
-
-      if (data.booking_history) {
-        history = JSON.parse(data.booking_history);
-      }
-
-      history.push({ date, type, vehicle });
-
-      const updatedBookingHistory = JSON.stringify(history);
-
-      db.execute("UPDATE users SET booking_history = ? WHERE id = ?", [
-        updatedBookingHistory,
-        user_id,
-      ]);
-    } else {
-      return;
-    }
-  });
-}
 
 app.get("/bookings", checkBanned, async (req, res) => {
   try {
@@ -374,37 +320,6 @@ app.get("/bookings", checkBanned, async (req, res) => {
 });
 
 //ADMIN FUNCTIONS
-const checkAdmin: RequestHandler = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const token = req.headers["authorization"];
-
-  if (!token) {
-    return res.status(401).json({ msg: "Unauthorized User" });
-  }
-
-  jwt.verify(
-    token as string,
-    process.env.JWT_SECRET as string,
-    async function (err, user) {
-      if (err) throw err;
-
-      if (user && typeof user !== "string" && "id" in user) {
-        const newUser = user as JwtPayload;
-
-        if (newUser.type_of_user === "admin") {
-          next();
-        } else {
-          return res.status(403).json({ msg: "Unauthorized User" });
-        }
-      } else {
-        return res.status(403).json({ msg: "Invalid User" });
-      }
-    }
-  );
-};
 
 app.post("/admin/ban/:userId", checkAdmin, async (req, res) => {
   try {
@@ -427,6 +342,8 @@ app.post("/admin/ban/:userId", checkAdmin, async (req, res) => {
           type = "user";
         } else if (type === "admin") {
           return res.status(403).json({ msg: "Cannot Ban another admin" });
+        } else if (type === "executive") {
+          return res.status(403).json({ msg: "Cannot Ban an executive" });
         } else {
           type = "user";
         }
@@ -436,7 +353,7 @@ app.post("/admin/ban/:userId", checkAdmin, async (req, res) => {
           userId,
         ]);
       } else {
-        res.status(404).json({ msg: "No user Found wi th the following Id." });
+        res.status(404).json({ msg: "No user Found with the following Id." });
       }
 
       res.status(200).json({ msg: "User status updated successfully" });
@@ -458,6 +375,114 @@ app.get("/admin/users", checkAdmin, async (req, res) => {
       const users = result as RowDataPacket[];
 
       res.status(200).json({ users });
+    });
+  } catch (err) {
+    res.status(500).json({ err });
+  }
+});
+
+// Executive API's
+app.get("/exec/bookings", checkExecutive, async (req, res) => {
+  try {
+    const query = "SELECT * FROM bookings";
+    db.query(query, async (err, result) => {
+      if (err) {
+        throw err;
+      }
+
+      const bookings = result as RowDataPacket[];
+
+      res.status(200).json({ bookings });
+    });
+  } catch (err) {
+    res.status(500).json({ err });
+  }
+});
+app.get("/exec/bookings", checkExecutive, async (req, res) => {
+  try {
+    const query = "SELECT * FROM bookings";
+    db.query(query, async (err, result) => {
+      if (err) {
+        throw err;
+      }
+
+      const bookings = result as RowDataPacket[];
+
+      res.status(200).json({ bookings });
+    });
+  } catch (err) {
+    res.status(500).json({ err });
+  }
+});
+
+app.get("/exec/status/:booking_id", checkExecutive, async (req, res) => {
+  try {
+    const id = req.params.booking_id;
+    const query = "SELECT * FROM `bookings` where `id` = (?)";
+    db.query(query, [id], async (err, result) => {
+      if (err) {
+        throw err;
+      }
+
+      const data = result as RowDataPacket[];
+      const booking = data[0];
+
+      db.query(
+        "UPDATE `bookings` set `status` = (?) where `id` = (?)",
+        [booking.status === "pending" ? "resolved" : "pending", id],
+        async (err, result) => {
+          if (err) {
+            throw err;
+          } else {
+            await updateUserBooking(booking.user_id, id);
+          }
+        }
+      );
+
+      res.status(200).json({ msg: "Booking Status Updated." });
+    });
+  } catch (err) {
+    res.status(500).json({ err });
+  }
+});
+
+// Bill Generation
+app.get("/invoice/:booking_id", checkBanned, async (req, res) => {
+  try {
+    const booking_id = req.params.booking_id;
+    const data = { booking_data: {}, user_data: {}, service_info: {} };
+    const query = "SELECT * FROM `bookings` where `id` = (?)";
+    db.query(query, [booking_id], async (err, result) => {
+      if (err) {
+        throw err;
+      }
+      const temp = result as RowDataPacket[];
+      if (temp.length > 0) {
+        const booking_data = temp[0];
+        const user_id = booking_data.user_id;
+        data.booking_data = booking_data;
+        // Getting User information
+        db.query(
+          "Select email, phone_number from users where id=(?)",
+          [user_id],
+          async (err, result) => {
+            if (err) {
+              throw err;
+            } else {
+              const user_data = (result as RowDataPacket[])[0];
+              if (user_data) {
+                data.user_data = user_data;
+                // Getting information about the service booked
+                res.status(200).json(data);
+              } else {
+                res.status(404).json({ msg: "User not Found" });
+              }
+            }
+          }
+        );
+      } else {
+        res.status(404).json({ msg: "Booking not found." });
+      }
     });
   } catch (err) {
     res.status(500).json({ err });
