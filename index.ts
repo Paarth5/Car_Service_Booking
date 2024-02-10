@@ -472,7 +472,7 @@ app.get("/invoice/:booking_id", checkBanned, async (req, res) => {
               const user_data = (result as RowDataPacket[])[0];
               if (user_data) {
                 data.user_data = user_data;
-                // Getting information about the service booked
+                // Getting information about the service booked as service_info
                 db.query(
                   `select * from ${booking_data.vehicle}_services where type_of_service=(?)`,
                   [booking_data.type],
