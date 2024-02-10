@@ -473,6 +473,8 @@ app.get("/invoice/:booking_id", checkBanned, async (req, res) => {
               if (user_data) {
                 data.user_data = user_data;
                 // Getting information about the service booked
+                db.query(`select * from ${booking_data.vehicle}_services`);
+
                 res.status(200).json(data);
               } else {
                 res.status(404).json({ msg: "User not Found" });
