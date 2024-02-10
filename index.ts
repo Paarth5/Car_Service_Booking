@@ -473,9 +473,19 @@ app.get("/invoice/:booking_id", checkBanned, async (req, res) => {
               if (user_data) {
                 data.user_data = user_data;
                 // Getting information about the service booked
-                db.query(`select * from ${booking_data.vehicle}_services`);
-
-                res.status(200).json(data);
+                db.query(
+                  `select * from ${booking_data.vehicle}_services where type_of_service=(?)`,
+                  [booking_data.type],
+                  async (err, result) => {
+                    if (err) {
+                      throw err;
+                    } else {
+                      const service_info = (result as RowDataPacket[])[0];
+                      data.service_info = service_info;
+                      res.status(200).json(data);
+                    }
+                  }
+                );
               } else {
                 res.status(404).json({ msg: "User not Found" });
               }
