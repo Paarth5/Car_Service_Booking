@@ -8,8 +8,14 @@ import morgan from "morgan";
 import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { RowDataPacket } from "mysql2";
-import { checkAdmin, checkBanned, checkExecutive } from "./middleware";
-import { addBookingHistory, updateUserBooking } from "./functions";
+import { checkBanned } from "./middleware";
+import { addBookingHistory } from "./functions";
+import carRoutes from "./routes/carRoutes";
+import bikeRoutes from "./routes/bikeRoutes";
+import adminRoutes from "./routes/adminRoutes";
+import execRoutes from "./routes/execRoutes";
+import invoiceRoutes from "./routes/invoiceRoutes";
+
 dotenv.config();
 const app = express();
 app.use(express.json());
@@ -62,7 +68,6 @@ app.post("/register", async (req, res) => {
             expiresIn: "24h",
           }
         );
-        console.log(result);
         res.status(201).json({ token });
       }
     );
@@ -90,7 +95,6 @@ app.post("/login", async (req, res) => {
     if (result.length > 0) {
       const firstUser = result[0];
       const isMatch = await bcrypt.compare(password, firstUser.password);
-      console.log(firstUser);
       if (isMatch) {
         const token = jwt.sign(
           {
@@ -118,116 +122,20 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/car/services/:type", checkBanned, (req, res) => {
-  try {
-    const type = req.params.type;
-    const query = "Select * from car_services where type_of_service = (?)";
-    db.query(query, [type], (err, result) => {
-      if (err) {
-        throw err;
-      }
-      const data = (result as RowDataPacket[])[0];
-      res.status(200).json({ ...data });
-    });
-  } catch (err) {
-    res.status(500).json({ err });
-  }
-});
+// Car Routes
+app.use("/car", carRoutes);
 
-app.get("/car/shopping/:type", checkBanned, (req, res) => {
-  try {
-    const type1 = req.params.type;
-    const query =
-      "SELECT id, name, price, img_path FROM car_Shopping WHERE type = (?)";
-    db.query(query, [type1], (err, result) => {
-      if (err) {
-        throw err;
-      }
-      const data = result as RowDataPacket[];
-      res.status(200).json({ ...data });
-    });
-  } catch (err) {
-    res.status(500).json({ err });
-  }
-});
+// Bike Routes
+app.use("/bike", bikeRoutes);
 
-app.get("/car/part/:id", checkBanned, (req, res) => {
-  try {
-    const id = req.params.id;
-    const query = "SELECT * FROM car_Shopping WHERE id = ?";
+//ADMIN Routes
+app.use("/admin", adminRoutes);
 
-    db.query(query, [id], (err, result) => {
-      if (err) {
-        throw err;
-      }
-      const data = result as RowDataPacket[];
-      if (data.length > 0) {
-        const data1 = data[0];
-        res.status(200).json({ ...data1 });
-      } else {
-        res.status(404).json({ msg: "No data found for the given ID" });
-      }
-    });
-  } catch (err) {
-    res.status(500).json({ err });
-  }
-});
+// Executive API's
+app.use("/exec", execRoutes);
 
-// Bike API's
-app.get("/bike/services/:type", checkBanned, (req, res) => {
-  try {
-    const type = req.params.type;
-    const query = "Select * from bike_services where type_of_service = (?)";
-    db.query(query, [type], (err, result) => {
-      if (err) {
-        throw err;
-      }
-      const data = (result as RowDataPacket[])[0];
-      res.status(200).json({ ...data });
-    });
-  } catch (err) {
-    res.status(500).json({ err });
-  }
-});
-
-app.get("/bike/shopping/:type", checkBanned, (req, res) => {
-  try {
-    const type1 = req.params.type;
-    const query =
-      "SELECT id, name, price, img_path FROM bike_Shopping WHERE type = (?)";
-    db.query(query, [type1], (err, result) => {
-      if (err) {
-        throw err;
-      }
-      const data = result as RowDataPacket[];
-      res.status(200).json({ ...data });
-    });
-  } catch (err) {
-    res.status(500).json({ err });
-  }
-});
-
-app.get("/bike/part/:id", checkBanned, (req, res) => {
-  try {
-    const id = req.params.id;
-    const query = "SELECT * FROM bike_Shopping WHERE id = ?";
-
-    db.query(query, [id], (err, result) => {
-      if (err) {
-        throw err;
-      }
-      const data = result as RowDataPacket[];
-      if (data.length > 0) {
-        const data1 = data[0];
-        res.status(200).json({ ...data1 });
-      } else {
-        res.status(404).json({ msg: "No data found for the given ID" });
-      }
-    });
-  } catch (err) {
-    res.status(500).json({ err });
-  }
-});
+// Bill Generation
+app.use("/invoice", invoiceRoutes);
 
 app.post("/booking/:vehicle/:type", checkBanned, async (req, res) => {
   try {
@@ -314,188 +222,6 @@ app.get("/bookings", checkBanned, async (req, res) => {
         }
       }
     );
-  } catch (err) {
-    res.status(500).json({ err });
-  }
-});
-
-//ADMIN FUNCTIONS
-
-app.post("/admin/ban/:userId", checkAdmin, async (req, res) => {
-  try {
-    const userId = req.params.userId;
-
-    const query = "SELECT type_of_user FROM users WHERE id = ?";
-    db.query(query, [userId], async (err, result) => {
-      if (err) {
-        throw err;
-      }
-
-      const rows = result as RowDataPacket[];
-      if (rows.length > 0) {
-        const data = rows[0];
-        let type = data.type_of_user;
-
-        if (type === "user") {
-          type = "banned";
-        } else if (type === "banned") {
-          type = "user";
-        } else if (type === "admin") {
-          return res.status(403).json({ msg: "Cannot Ban another admin" });
-        } else if (type === "executive") {
-          return res.status(403).json({ msg: "Cannot Ban an executive" });
-        } else {
-          type = "user";
-        }
-
-        db.execute("UPDATE users SET type_of_user = ? WHERE id = ?", [
-          type,
-          userId,
-        ]);
-      } else {
-        res.status(404).json({ msg: "No user Found with the following Id." });
-      }
-
-      res.status(200).json({ msg: "User status updated successfully" });
-    });
-  } catch (err) {
-    res.status(500).json({ err });
-  }
-});
-
-app.get("/admin/users", checkAdmin, async (req, res) => {
-  try {
-    const query =
-      "SELECT id, email, phone_number, booking_history, type_of_user FROM users";
-    db.query(query, async (err, result) => {
-      if (err) {
-        throw err;
-      }
-
-      const users = result as RowDataPacket[];
-
-      res.status(200).json({ users });
-    });
-  } catch (err) {
-    res.status(500).json({ err });
-  }
-});
-
-// Executive API's
-app.get("/exec/bookings", checkExecutive, async (req, res) => {
-  try {
-    const query = "SELECT * FROM bookings";
-    db.query(query, async (err, result) => {
-      if (err) {
-        throw err;
-      }
-
-      const bookings = result as RowDataPacket[];
-
-      res.status(200).json({ bookings });
-    });
-  } catch (err) {
-    res.status(500).json({ err });
-  }
-});
-app.get("/exec/bookings", checkExecutive, async (req, res) => {
-  try {
-    const query = "SELECT * FROM bookings";
-    db.query(query, async (err, result) => {
-      if (err) {
-        throw err;
-      }
-
-      const bookings = result as RowDataPacket[];
-
-      res.status(200).json({ bookings });
-    });
-  } catch (err) {
-    res.status(500).json({ err });
-  }
-});
-
-app.get("/exec/status/:booking_id", checkExecutive, async (req, res) => {
-  try {
-    const id = req.params.booking_id;
-    const query = "SELECT * FROM `bookings` where `id` = (?)";
-    db.query(query, [id], async (err, result) => {
-      if (err) {
-        throw err;
-      }
-
-      const data = result as RowDataPacket[];
-      const booking = data[0];
-
-      db.query(
-        "UPDATE `bookings` set `status` = (?) where `id` = (?)",
-        [booking.status === "pending" ? "resolved" : "pending", id],
-        async (err, result) => {
-          if (err) {
-            throw err;
-          } else {
-            await updateUserBooking(booking.user_id, id);
-          }
-        }
-      );
-
-      res.status(200).json({ msg: "Booking Status Updated." });
-    });
-  } catch (err) {
-    res.status(500).json({ err });
-  }
-});
-
-// Bill Generation
-app.get("/invoice/:booking_id", checkBanned, async (req, res) => {
-  try {
-    const booking_id = req.params.booking_id;
-    const data = { booking_data: {}, user_data: {}, service_info: {} };
-    const query = "SELECT * FROM `bookings` where `id` = (?)";
-    db.query(query, [booking_id], async (err, result) => {
-      if (err) {
-        throw err;
-      }
-      const temp = result as RowDataPacket[];
-      if (temp.length > 0) {
-        const booking_data = temp[0];
-        const user_id = booking_data.user_id;
-        data.booking_data = booking_data;
-        // Getting User information
-        db.query(
-          "Select email, phone_number from users where id=(?)",
-          [user_id],
-          async (err, result) => {
-            if (err) {
-              throw err;
-            } else {
-              const user_data = (result as RowDataPacket[])[0];
-              if (user_data) {
-                data.user_data = user_data;
-                // Getting information about the service booked
-                db.query(
-                  `select * from ${booking_data.vehicle}_services where type_of_service=(?)`,
-                  [booking_data.type],
-                  async (err, result) => {
-                    if (err) {
-                      throw err;
-                    } else {
-                      const service_info = (result as RowDataPacket[])[0];
-                      data.service_info = service_info;
-                      res.status(200).json(data);
-                    }
-                  }
-                );
-              } else {
-                res.status(404).json({ msg: "User not Found" });
-              }
-            }
-          }
-        );
-      } else {
-        res.status(404).json({ msg: "Booking not found." });
-      }
-    });
   } catch (err) {
     res.status(500).json({ err });
   }

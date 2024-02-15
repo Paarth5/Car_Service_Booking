@@ -16,7 +16,13 @@ const checkBanned: RequestHandler = (
     token as string,
     process.env.JWT_SECRET as string,
     async function (err, user) {
-      if (err) throw err;
+      if (err) {
+        if (err.name === "TokenExpiredError") {
+          return res.status(401).json({ msg: "Token expired" });
+        } else {
+          return res.status(403).json({ msg: "Invalid token" });
+        }
+      }
 
       if (user && typeof user !== "string" && "id" in user) {
         const newUser = user as JwtPayload;
@@ -48,7 +54,13 @@ const checkAdmin: RequestHandler = (
     token as string,
     process.env.JWT_SECRET as string,
     async function (err, user) {
-      if (err) throw err;
+      if (err) {
+        if (err.name === "TokenExpiredError") {
+          return res.status(401).json({ msg: "Token expired" });
+        } else {
+          return res.status(403).json({ msg: "Invalid token" });
+        }
+      }
 
       if (user && typeof user !== "string" && "id" in user) {
         const newUser = user as JwtPayload;
@@ -80,7 +92,13 @@ const checkExecutive: RequestHandler = (
     token as string,
     process.env.JWT_SECRET as string,
     async function (err, booking) {
-      if (err) throw err;
+      if (err) {
+        if (err.name === "TokenExpiredError") {
+          return res.status(401).json({ msg: "Token expired" });
+        } else {
+          return res.status(403).json({ msg: "Invalid token" });
+        }
+      }
 
       if (booking && typeof booking !== "string" && "id" in booking) {
         const newUser = booking as JwtPayload;
