@@ -1,4 +1,4 @@
-import express, { Router, Request, Response } from "express";
+import express, { Router } from "express";
 import sql from "mysql2";
 import { RowDataPacket } from "mysql2";
 import { checkAdmin } from "../middleware";
@@ -11,7 +11,7 @@ const db = sql.createConnection({
 });
 const router: Router = express.Router();
 
-router.post("/ban/:userId", checkAdmin, async (req, res) => {
+router.get("/ban/:userId", checkAdmin, async (req, res) => {
   try {
     const userId = req.params.userId;
 

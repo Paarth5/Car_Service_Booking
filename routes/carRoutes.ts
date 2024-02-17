@@ -1,4 +1,4 @@
-import express, { Router, Request, Response } from "express";
+import express, { Router } from "express";
 import sql from "mysql2";
 import { RowDataPacket } from "mysql2";
 import { checkBanned } from "../middleware";
@@ -36,8 +36,8 @@ router.get("/shopping/:type", checkBanned, (req, res) => {
       if (err) {
         throw err;
       }
-      const data = result as RowDataPacket[];
-      res.status(200).json({ ...data });
+
+      res.status(200).json({ result });
     });
   } catch (err) {
     res.status(500).json({ err });

@@ -1,4 +1,4 @@
-import express, { Router, Request, Response } from "express";
+import express, { Router } from "express";
 import sql from "mysql2";
 import { RowDataPacket } from "mysql2";
 import { checkExecutive } from "../middleware";

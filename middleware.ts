@@ -1,5 +1,13 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import sql, { RowDataPacket } from "mysql2";
+const db = sql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "carservice",
+  waitForConnections: true,
+});
 
 const checkBanned: RequestHandler = (
   req: Request,
@@ -26,12 +34,18 @@ const checkBanned: RequestHandler = (
 
       if (user && typeof user !== "string" && "id" in user) {
         const newUser = user as JwtPayload;
-
-        if (newUser.type_of_user === "banned") {
-          return res.status(403).json({ msg: "Unauthorized User" });
-        } else {
-          next();
-        }
+        const query = "Select (type_of_user) from users where id = (?)";
+        db.query(query, [newUser.id], (err, result) => {
+          if (err) {
+            throw err;
+          }
+          const data = (result as RowDataPacket[])[0];
+          if (data.type_of_user === "banned") {
+            return res.status(403).json({ msg: "Banned User" });
+          } else {
+            next();
+          }
+        });
       } else {
         return res.status(403).json({ msg: "Invalid User" });
       }
@@ -64,12 +78,18 @@ const checkAdmin: RequestHandler = (
 
       if (user && typeof user !== "string" && "id" in user) {
         const newUser = user as JwtPayload;
-
-        if (newUser.type_of_user === "admin") {
-          next();
-        } else {
-          return res.status(403).json({ msg: "Unauthorized User" });
-        }
+        const query = "Select (type_of_user) from users where id = (?)";
+        db.query(query, [newUser.id], (err, result) => {
+          if (err) {
+            throw err;
+          }
+          const data = (result as RowDataPacket[])[0];
+          if (data.type_of_user === "admin") {
+            next();
+          } else {
+            return res.status(403).json({ msg: "Unauthorized User" });
+          }
+        });
       } else {
         return res.status(403).json({ msg: "Invalid User" });
       }
@@ -102,12 +122,18 @@ const checkExecutive: RequestHandler = (
 
       if (booking && typeof booking !== "string" && "id" in booking) {
         const newUser = booking as JwtPayload;
-
-        if (newUser.type_of_user === "executive") {
-          next();
-        } else {
-          return res.status(403).json({ msg: "Unauthorized User" });
-        }
+        const query = "Select (type_of_user) from users where id = (?)";
+        db.query(query, [newUser.id], (err, result) => {
+          if (err) {
+            throw err;
+          }
+          const data = (result as RowDataPacket[])[0];
+          if (data.type_of_user === "executive") {
+            next();
+          } else {
+            return res.status(403).json({ msg: "Unauthorized User" });
+          }
+        });
       } else {
         return res.status(403).json({ msg: "Invalid User" });
       }

@@ -61,7 +61,6 @@ app.post("/register", async (req, res) => {
             id: userId,
             email,
             phone_number,
-            type_of_user: "user",
           },
           process.env.JWT_SECRET as string,
           {
@@ -101,7 +100,6 @@ app.post("/login", async (req, res) => {
             id: firstUser.id,
             email: firstUser.email,
             phone_number: firstUser.phone_number,
-            type_of_user: firstUser.type_of_user,
           },
           process.env.JWT_SECRET as string,
           {
@@ -215,7 +213,10 @@ app.get("/bookings", checkBanned, async (req, res) => {
           db.query(query, [newUser.id], (err, result) => {
             if (err) {
               throw err;
-            } else res.status(200).json({ result });
+            } else {
+              const data = (result as RowDataPacket[])[0];
+              res.status(200).json({ ...data });
+            }
           });
         } else {
           return res.status(403).json({ msg: "Invalid User" });
